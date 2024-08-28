@@ -1,4 +1,35 @@
+#include <stdio.h>
 #include <stdlib.h>
+
+/*
+ * Basic loop of a shell
+ *
+ * Shell does the following during its loop:
+ *   1. Read: Read the command from standard input.
+ *   2. Parse: Separate the command string into a program and arguments.
+ *   3. Execute: Run the parsed command.
+ */
+/**
+ * @brief Loop getting input and executing it.
+ */
+void sh_loop(void) {
+    char *line;
+    char **args;
+    int status;
+
+    do {
+        printf("> ");
+
+        // Read
+
+        // Parse
+
+        // Execute
+
+        free(line);
+        free(args);
+    } while (status);
+}
 
 /*
  * A shell does three main things in its lifetime.
@@ -19,6 +50,7 @@ int main(int argc, char **argv) {
     // Load config files, if any.
 
     // Run command loop.
+    sh_loop();
 
     // Perform any shutdown/cleanup.
     return EXIT_SUCCESS;
