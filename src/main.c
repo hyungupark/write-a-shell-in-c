@@ -1,5 +1,57 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+/*
+ * Parsing the line
+ *
+ * We are going to parse that line into a list of arguments.
+ * We won't allow quoting or backslash escaping in our command line arguments.
+ * Instead, we will simply use whitespace to separate arguments from each other.
+ * So the command echo "this message" would not call echo with a single argument this message,
+ * but rather it would call echo with two arguments: "this" and "message"
+ *
+ * With those simplifications, all we need to do is "tokenize" the string using whitespace as delimiters.
+ * That means we can break out the classic library function "strtok" to do some of the dirty work for us.
+ */
+#define SH_TOK_BUFFER_SIZE 64
+#define SH_TOK_DELIMITER " \t\r\n\a"
+
+/**
+ * @brief Split a line into tokens.
+ * @param line The line.
+ * @return Null-terminated array of tokens.
+ */
+char **sh_split_line(char *line) {
+    int buffer_size = SH_TOK_BUFFER_SIZE, position = 0;
+    char **tokens = malloc(buffer_size * sizeof(char *));
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "sh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    token = strtok(line, SH_TOK_DELIMITER);
+    while (token != NULL) {
+        tokens[position] = token;
+        position++;
+
+        if (position >= buffer_size) {
+            buffer_size += SH_TOK_BUFFER_SIZE;
+            tokens = realloc(tokens, buffer_size * sizeof(char *));
+
+            if (!tokens) {
+                fprintf(stderr, "sh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, SH_TOK_BUFFER_SIZE);
+    }
+    tokens[position] = NULL;
+    return tokens;
+}
 
 /*
  * Reading a line
