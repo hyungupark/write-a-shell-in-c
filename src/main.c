@@ -3,6 +3,70 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * Shell Builtins
+ *
+ * Most commands a shell executes are programs, but not all of them. Some of them are
+ * built right into the shell.
+ *
+ * The reason is actually pretty simple. If you want to change directory, you need to
+ * use the function "chdir()". The thing is, the current directory is a property of
+ * a process. So, if you wrote a program called "cd" that changed directory, it would
+ * just change its own current directory, and then terminate. Its parent process's
+ * current directory would be unchanged. Instead, the shell process itself needs to
+ * execute "chdir()", so that its own current directory is updated. Then, when it
+ * launches child processes, they will inherit that directory too.
+ *
+ * Similarly, if there was a program named "exit", it wouldn't be able to exit the shell
+ * that called it. That command also needs to be built into the shell. Also, most shells
+ * are configured by running configuration scripts, like "~/.bashrc". Those scripts use
+ * commands that changed the operation of the shell. These commands could only change
+ * the shell's operation if they were implemented within the shell process itself.
+ *
+ * So, it makes sense that we need to add some commands to the shell itself. The ones I
+ * added to my shell are "cd", "exit", and "help".
+ */
+
+int sh_cd(char **args);
+
+int sh_help(char **args);
+
+int sh_exit(char **args);
+
+
+/*
+ * How shells start processes
+ *
+ * Staring processes is the main function of shells. So writing a shell means that
+ * you need to know exactly what's going on with processes and how they start.
+ *
+ * There are only two ways of starting processes on Unix. The first one (which almost
+ * doesn't count) is by being "Init". When a Unix computer boots, its kernel is loaded.
+ * Once it is loaded and initialized, the kernel starts only one process, which is called "Init".
+ * This process runs for the entire length of time that the computer is on, and it manages
+ * loading up the rest of the processes that you need for your computer to be useful.
+ *
+ * Since most programs aren't "Init", that leaves only one practical way for processes to
+ * get started: the "fork()" system call. When this function is called, the operating system
+ * makes a duplicate of the process and starts them both running. The original process is
+ * called the "parent", and the new one is called the "child". "fork()" returns 0 to the child
+ * process, and it returns to the parent the process ID number (PID) of its child. In essence,
+ * this means that the only way for new processes is to start is by an existing one duplicating
+ * itself.
+ *
+ * This might sound like a problem. Typically, when you want to run a new process, you don't
+ * just want another copy of the same program - you want to run a different program. THat's
+ * what the "exec()" system call is all about. It replaces the current running program with
+ * an entirely new one. This means that when you call "exec()", the operating system stops
+ * your process, loads up the new program, and starts that one in its place. A process never
+ * returns from an "exec()" call (unless there's an error).
+ *
+ * With these two system calls, we have the building blocks for how most programs are run on Unix.
+ * First, an existing process forks itself into two separate ones. Then, the child uses "exec()" to
+ * replace itself with a new program. The parent process can continue doing other things, and it can
+ * even keep tabs on its children, using the system call "wait()".
+ */
+
 /**
  * @brief Launch a program and wait for it to terminate.
  * @param args Null terminated list of arguments (including program).
@@ -32,6 +96,7 @@ int sh_launch(char **args) {
     return 1;
 }
 
+
 /*
  * Parsing the line
  *
@@ -44,6 +109,7 @@ int sh_launch(char **args) {
  * With those simplifications, all we need to do is "tokenize" the string using whitespace as delimiters.
  * That means we can break out the classic library function "strtok" to do some of the dirty work for us.
  */
+
 #define SH_TOK_BUFFER_SIZE 64
 #define SH_TOK_DELIMITER " \t\r\n\a"
 
@@ -83,6 +149,7 @@ char **sh_split_line(char *line) {
     return tokens;
 }
 
+
 /*
  * Reading a line
  *
@@ -92,6 +159,7 @@ char **sh_split_line(char *line) {
  * they don't exceed it. Instead, you need to start with a block, and if they
  * do exceed it, reallocate with more space. This is common strategy in C.
  */
+
 #define SH_READ_LINE_BUFFER_SIZE 1024
 
 /**
@@ -134,6 +202,7 @@ char *sh_read_line(void) {
     }
 }
 
+
 /*
  * Basic loop of a shell
  *
@@ -142,6 +211,7 @@ char *sh_read_line(void) {
  *   2. Parse: Separate the command string into a program and arguments.
  *   3. Execute: Run the parsed command.
  */
+
 /**
  * @brief Loop getting input and executing it.
  */
@@ -165,6 +235,7 @@ void sh_loop(void) {
     } while (status);
 }
 
+
 /*
  * A shell does three main things in its lifetime.
  *   1. Initialize: In this step, a typical shell would read and execute its configuration files.
@@ -174,6 +245,7 @@ void sh_loop(void) {
  *   3. Terminate: After its commands are executed, the shell executes any shutdown commands,
  *      frees up any memory, and terminates.
  */
+
 /**
  * @brief Main entry point.
  * @param argc Argument count.
