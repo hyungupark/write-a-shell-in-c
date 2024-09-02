@@ -27,11 +27,88 @@
  * added to my shell are "cd", "exit", and "help".
  */
 
+/*
+ * Function declarations for builtin shell commands:
+ *   - cd: sh_cd
+ *   - help: sh_help
+ *   - exit: sh_exit
+ */
+
 int sh_cd(char **args);
 
 int sh_help(char **args);
 
 int sh_exit(char **args);
+
+
+/*
+ * List of builtin commands, followed by their corresponding functions.
+ */
+
+char *builtin_str[] = {
+        "cd",
+        "help",
+        "exit",
+};
+
+int (*builtin_func[])(char **) = {
+        &sh_cd,
+        &sh_help,
+        &sh_exit,
+};
+
+int sh_num_builtins() {
+    return sizeof(builtin_str) / sizeof(char *);
+}
+
+
+/*
+ * Builtin function implementations.
+ */
+
+/**
+ * @brief Builtin command: change directory.
+ * @param args List of args. args[0] is "cd". args[1] is the directory.
+ * @return Always returns 1, to continue executing.
+ */
+int sh_cd(char **args) {
+    if (args[1] == NULL) {
+        fprintf(stderr, "sh: expected argument to \"cd\"\n");
+    } else {
+        if (chdir(args[1]) != 0) {
+            perror("sh");
+        }
+    }
+    return 1;
+}
+
+/**
+ * @brief Builtin command: print help.
+ * @param args List of args. Not examined.
+ * @return Always returns 1, to continue executing.
+ */
+int sh_help(char **args) {
+    int i;
+    printf("SH\m");
+    printf("Type program names and arguments, and hit enter.\n");
+    printf("The following are built in:\n");
+
+    for (i = 0; i < sh_num_builtins(); i++) {
+        printf("  %s\n", builtin_str[i]);
+    }
+
+    printf("Use the man command for information on other programs.\n");
+    return 1;
+}
+
+/**
+ * @brief Builtin command: exit.
+ * @param args List of args. Not examined.
+ * @return Always returns 0, to terminate execution.
+ */
+int sh_exit(char **args) {
+    return 0;
+}
 
 
 /*
@@ -143,7 +220,7 @@ char **sh_split_line(char *line) {
             }
         }
 
-        token = strtok(NULL, SH_TOK_BUFFER_SIZE);
+        token = strtok(NULL, SH_TOK_DELIMITER);
     }
     tokens[position] = NULL;
     return tokens;
