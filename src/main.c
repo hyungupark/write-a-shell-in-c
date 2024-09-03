@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
+
 /*
  * Shell Builtins
  *
@@ -175,6 +176,36 @@ int sh_launch(char **args) {
 
 
 /*
+ * Shell execution
+ *
+ * The last step is to implement "sh_execute()", the function that will either launch
+ * a builtin, or a process.
+ */
+
+/**
+ * @brief Execute shell built-in or launch program.
+ * @param args Null terminated list of arguments.
+ * @return 1 if the shell should continue running, 0 if it should terminate.
+ */
+int sh_execute(char **args) {
+    int i;
+
+    if (args[0] == NULL) {
+        // An empty command was entered.
+        return 1;
+    }
+
+    for (i = 0; i < sh_num_builtins(); i++) {
+        if (strcmp(args[0], builtin_str[i]) == 0) {
+            return (*builtin_func[i])(args);
+        }
+    }
+
+    return sh_launch(args);
+}
+
+
+/*
  * Parsing the line
  *
  * We are going to parse that line into a list of arguments.
@@ -304,8 +335,10 @@ void sh_loop(void) {
         line = sh_read_line();
 
         // Parse
+        args = sh_split_line(line);
 
         // Execute
+        status = sh_execute(args);
 
         free(line);
         free(args);
